@@ -1,7 +1,7 @@
 {
-  "created_at": "",
-  "description": "",
-  "download_url": "",
+  "created_at": "2026-11-15T09:15:59",
+  "description": "## 1.0.0-dev.1 (2026-11-15)\n\n### ✨ New Features\n\n* add Block channel patch for YouTube ([7930a58](https://github.com/needfish/channel-blocker-patches/commit/7930a58d4f1b7aa1ba6a886028e2814f9a036382))\n\n### 🐛 Bug Fixes\n\n* Resolve Kotlin compilation errors ([158adf0](https://github.com/needfish/channel-blocker-patches/commit/158adf0c1eb4f6e2f247753531115179910c2af1))",
+  "download_url": "https://github.com/needfish/channel-blocker-patches/releases/download/v1.0.0-dev.1/patches-1.0.0-dev.1.mpp",
   "signature_download_url": "",
-  "version": ""
+  "version": "1.0.0-dev.1"
 }
