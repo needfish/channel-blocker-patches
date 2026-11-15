@@ -1,8 +1,24 @@
-# 🧩 Channel blocker patches
+# 🧩 Channel blocker patches (Morphe add-on)
 
-Morphe patches for YouTube. Adds a **"Block channel"** button to the video
-flyout (three-dot) menu; blocked channels are removed from search results and
-recommendations.
+**Add-on bundle** for Morphe patches. Adds a **"Block channel"** toggle to
+YouTube's own flyout menu items ("Not interested" / "Don't recommend
+channel"); blocked channels are removed from search results and recommendations.
+
+## ⚠️ Requires the official Morphe patch bundle
+
+This bundle is an add-on: it registers through Morphe's add-on manager and
+injects its filter into the base bundle's runtime Litho filter. It **must be
+patched together with the official Morphe Patches source** (verified at patch
+time with a clear error message).
+
+## How it works
+
+- Registers via `AddOnManager.registerAddOns()` (Morphe add-on contract)
+- Filter: injected into `LithoFilterPatch.isFiltered()` of the base bundle —
+  blocked channel ids found in a component's protobuf buffer remove it
+- Menu toggle: hooks the contextual flyout click handler (fingerprint ported
+  from upstream Morphe patches); tapping "Not interested" / "Don't recommend
+  channel" also persists the channel to a local blocklist
 
 ## ❓ About
 

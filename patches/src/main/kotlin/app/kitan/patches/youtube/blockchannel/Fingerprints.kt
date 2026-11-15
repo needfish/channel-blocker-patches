@@ -1,60 +1,62 @@
+/*
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * ContextualMenuItemBuilderFingerprint / ContextualMenuItemBuilderOnClickFingerprint
+ * ported from MorpheApp/morphe-patches (layout/hide/general/Fingerprints.kt),
+ * which hard forked ReVanced. See the upstream NOTICE file for GPLv3 Section 7
+ * terms that apply to this code.
+ *
+ * Modified by kitan for the Channel blocker add-on bundle.
+ */
+
 package app.kitan.patches.youtube.blockchannel
 
 import app.morphe.patcher.Fingerprint
-import app.morphe.patcher.string
+import app.morphe.patcher.InstructionLocation.MatchAfterWithin
+import app.morphe.patcher.checkCast
+import app.morphe.patcher.methodCall
+import app.morphe.patcher.resource.ResourceType
+import app.morphe.patcher.resourceLiteral
 import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.Opcode
 
 /**
- * Hooks the app startup path so the extension can initialize its
- * SharedPreferences blocklist before any feed/search filtering runs.
- *
- * ⚠️ TODO(verify): this fingerprint targets YouTube 21.30.216. Verify against
- * the decompiled APK (jadx) before releasing. The Morphe upstream project has
- * an equivalent hook; cross-check with:
- *   https://github.com/MorpheApp/morphe-patches/tree/main/patches/src/main/kotlin/app/morphe/patches/youtube/misc/integrations
+ * The class that builds the contextual (three-dot) flyout menu item views.
  */
-object StartupFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
+internal object ContextualMenuItemBuilderFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL, AccessFlags.SYNTHETIC),
     returnType = "V",
-    // The application class onCreate path calls the integrations initializer
-    // (Morphe/ReVanced style). Match the obfuscated caller via the extension
-    // class reference it already contains.
-    strings = listOf(
-        "com.google.android.youtube.application.Application"
-    )
-)
-
-/**
- * Hooks the Litho layout creation path used by feed/search renderers, so every
- * mounted component can be checked against the channel blocklist.
- *
- * ⚠️ TODO(verify): verify against the decompiled 21.30.216 APK. Look for the
- * method that receives a `com.facebook.litho.ComponentContext` and a deep
- * protobuf buffer of the feed item — the Morphe upstream equivalent lives in
- * patches/youtube/misc/litho/filter/. The method typically contains the
- * string constant "tree" and calls ComponentContext#getLogger.
- */
-object LithoFilterFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
-    returnType = "V",
+    parameters = listOf("L", "L"),
     filters = listOf(
-        string("feedItem") // TODO(verify): pin down with jadx
+        methodCall(
+            opcode = Opcode.INVOKE_STATIC,
+            returnType = "Ljava/lang/CharSequence;",
+        ),
+        checkCast(
+            type = "Landroid/widget/TextView;",
+            location = MatchAfterWithin(3),
+        ),
+        methodCall(
+            smali = "Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V",
+            location = MatchAfterWithin(5),
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_STATIC,
+            returnType = "I",
+            location = MatchAfterWithin(7),
+        ),
+        resourceLiteral(ResourceType.ATTR, "ytTextPrimary"),
     )
 )
 
 /**
- * Hooks the video flyout (three-dot) menu builder for player and feed items so
- * the extension can append a "Block channel" row.
- *
- * ⚠️ TODO(verify): verify against the decompiled 21.30.216 APK. Search for the
- * class handling the engagement flyout that references
- * "video_context_menu" / "playability" menu item ids. Upstream reference:
- *   https://github.com/MorpheApp/morphe-patches — extensions/youtube .../utils/FlyoutUtils.java
+ * The click handler of the contextual flyout menu items.
  */
-object FlyoutMenuFingerprint : Fingerprint(
+internal object ContextualMenuItemBuilderOnClickFingerprint : Fingerprint(
+    classFingerprint = ContextualMenuItemBuilderFingerprint,
+    name = "onClick",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
-    strings = listOf(
-        "FlyoutMenu" // TODO(verify)
-    )
+    parameters = listOf("Landroid/view/View;"),
 )

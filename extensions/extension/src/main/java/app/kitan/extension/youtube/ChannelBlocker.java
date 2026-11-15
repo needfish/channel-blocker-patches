@@ -5,22 +5,27 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.widget.Toast;
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Channel blocker.
+ * Channel blocker add-on.
  *
- * Holds the persistent blocklist and exposes the entry points the injected
- * bytecode calls:
+ * Registered at runtime by the add-on manager of the base Morphe bundle
+ * (the patch adds a call to {@link #register()} to
+ * {@code AddOnManager.registerAddOns()}).
  *
- *  - initialize()            app startup (see StartupFingerprint)
- *  - filterFeedItem(...)     Litho filter hook, returns true to hide an item
- *  - addFlyoutMenuItem(...)  video flyout menu hook, appends the toggle button
+ * Features:
+ *  - {@link #onFlyoutItemClick(Object)}: when the user taps YouTube's own
+ *    "Not interested" / "Don't recommend channel" flyout item, the channel is
+ *    persisted to the local blocklist (second tap unblocks).
+ *  - {@link ChannelBlockerFilter}: feeds/search components of blocked channels
+ *    are filtered out by the base bundle's runtime Litho filter.
  *
- * Storage: app-private SharedPreferences (survives app updates, cleared on
- * data wipe — same trade-off Morphe's own settings make).
+ * Host classes of the base bundle are accessed by reflection only, because
+ * this bundle cannot compile against the base bundle extension.
  */
 @SuppressWarnings("unused")
 public final class ChannelBlocker {
@@ -30,15 +35,17 @@ public final class ChannelBlocker {
 
     private static SharedPreferences prefs;
     private static volatile Set<String> blockedChannels;
-    private static String currentVideoId;
-    private static String currentChannelId;
 
     private ChannelBlocker() {
     }
 
-    // region Lifecycle
+    // region Add-on registration
 
-    public static void initialize() {
+    /**
+     * Called by the add-on manager of the base Morphe bundle, early in the
+     * player lifecycle, before feeds are browsed.
+     */
+    public static void register() {
         if (prefs != null) {
             return;
         }
@@ -49,6 +56,8 @@ public final class ChannelBlocker {
         prefs = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
         blockedChannels = Collections.synchronizedSet(
                 new HashSet<>(prefs.getStringSet(PREF_BLOCKED_CHANNELS, Collections.emptySet())));
+        Logger.printDebug(() -> "Channel blocker registered with "
+                + blockedChannels.size() + " blocked channels");
     }
 
     // endregion
@@ -92,24 +101,12 @@ public final class ChannelBlocker {
 
     // endregion
 
-    // region Litho feed filter (search results + recommendations)
-
     /**
-     * Called from the injected Litho hook for every feed/search renderer.
-     *
-     * @param componentPath litho component tree path (e.g. "video_with_context")
-     * @param protobufBuffer deep layout protobuf of the feed item
-     * @return true when the item must be hidden (its channel is blocked)
+     * Snapshot of the blocked channel set for the hot filter path, or null
+     * when the add-on is not initialized.
      */
-    public static boolean filterFeedItem(String componentPath, Object protobufBuffer) {
-        if (blockedChannels == null || blockedChannels.isEmpty()) {
-            return false;
-        }
-        String channelId = ChannelBlockFilter.getChannelId(componentPath, protobufBuffer);
-        if (channelId == null) {
-            return false;
-        }
-        return isChannelBlocked(channelId);
+    public static Set<String> blockedChannelsSnapshotForFilter() {
+        return blockedChannels;
     }
 
     // endregion
@@ -117,49 +114,111 @@ public final class ChannelBlocker {
     // region Flyout menu button
 
     /**
-     * Called when a video flyout (three-dot) menu is about to be shown.
-     * Adds a "Block channel" / "Unblock channel" row to the menu.
+     * Called from the injected contextual flyout menu click handler.
      *
-     * @param menu the flyout menu instance (Litho popup builder) being created
+     * Resolves the channel of the flyout's video and toggles the block.
+     * Always returns false, so YouTube's own "Not interested" /
+     * "Don't recommend channel" action also runs.
+     *
+     * @param clickHandlerInstance the click handler instance (unused for now)
+     * @return false (never consumes the click)
      */
-    public static void addFlyoutMenuItem(Object menu) {
-        // Resolve the channel the menu belongs to from the flyout's video id.
-        String videoId = FlyoutMenu.getVideoId(menu);
-        if (videoId == null) {
-            return;
-        }
-        currentVideoId = videoId;
-        currentChannelId = null; // resolved lazily on first tap (see onTap below)
+    public static boolean onFlyoutItemClick(Object clickHandlerInstance) {
+        try {
+            if (blockedChannels == null) {
+                return false; // Add-on not initialized yet (should not happen).
+            }
 
-        FlyoutMenu.addMenuItem(menu, blockedChannels != null
-                ? "Unblock channel"
-                : "Block channel",
-                FlyoutMenu::onBlockToggleTapped);
+            String channelId = resolveCurrentChannelId();
+            if (channelId == null) {
+                return false;
+            }
+
+            if (isChannelBlocked(channelId)) {
+                unblockChannel(channelId);
+                showToast("Channel unblocked");
+            } else {
+                blockChannel(channelId);
+                showToast("Channel blocked from search & recommendations");
+            }
+        } catch (Throwable ex) {
+            Logger.printException(() -> "onFlyoutItemClick failure", ex);
+        }
+        return false;
     }
 
     /**
-     * Tap handler for the injected flyout row. Resolves the channel id for the
-     * current video (if not yet resolved) and toggles the block.
+     * Resolves the channel id of the current flyout context.
+     *
+     * Uses the base bundle's flyout channel request when a flyout is open
+     * (works for feed items), and falls back to the channel of the currently
+     * playing video (player flyout). Both are accessed by reflection, since
+     * this bundle cannot compile against the base bundle extension.
      */
-    static void onBlockToggleTapped() {
-        String channelId = currentChannelId;
-        if (channelId == null) {
-            channelId = FlyoutMenu.resolveChannelId(currentVideoId);
-            currentChannelId = channelId;
-        }
-        if (channelId == null) {
-            showToast("Could not resolve channel");
-            return;
+    private static String resolveCurrentChannelId() {
+        // Preferred: the channel request of the open flyout menu.
+        try {
+            Class<?> flyoutUtils = Class.forName(
+                    "app.morphe.extension.youtube.patches.utils.FlyoutUtils");
+            Object request = flyoutUtils.getMethod("getFlyoutChannelIdRequest")
+                    .invoke(null);
+            if (request != null) {
+                Object channelInfo = request.getClass()
+                        .getMethod("getChannelInfo").invoke(request);
+                String channelId = pairSecond(channelInfo);
+                if (channelId != null && !channelId.isEmpty()) {
+                    return channelId;
+                }
+            }
+        } catch (Exception ex) {
+            // Flyout hooks of the base bundle are not active in this setup.
+            Logger.printDebug(() -> "Flyout channel request not available");
         }
 
-        if (isChannelBlocked(channelId)) {
-            unblockChannel(channelId);
-            showToast("Channel unblocked");
-        } else {
-            blockChannel(channelId);
-            showToast("Channel blocked — removed from search & recommendations");
+        // Fallback: channel of the currently playing video (player flyout).
+        String current = callStaticString(
+                "app.morphe.extension.youtube.patches.VideoInformation",
+                "getChannelId");
+        if (current != null && !current.isEmpty()) {
+            return current;
+        }
+        return null;
+    }
+
+    /**
+     * Reads the 'second' field of an android.util.Pair.
+     */
+    private static String pairSecond(Object pair) {
+        if (pair == null) {
+            return null;
+        }
+        try {
+            Field second = pair.getClass().getField("second");
+            Object value = second.get(pair);
+            return value instanceof String ? (String) value : null;
+        } catch (Exception ex) {
+            return null;
         }
     }
+
+    private static String callStaticString(String className, String methodName,
+                                           Class<?>[] parameterTypes, Object... args) {
+        try {
+            Class<?> clazz = Class.forName(className);
+            java.lang.reflect.Method method = clazz.getDeclaredMethod(methodName,
+                    parameterTypes != null ? parameterTypes : new Class[0]);
+            method.setAccessible(true);
+            Object result = method.invoke(null, args);
+            return result instanceof String ? (String) result : null;
+        } catch (Exception ex) {
+            // Host class or method not present in this base bundle version.
+            return null;
+        }
+    }
+
+    // endregion
+
+    // region UI helpers
 
     private static void showToast(String message) {
         Activity activity = Utils.getActivity();
