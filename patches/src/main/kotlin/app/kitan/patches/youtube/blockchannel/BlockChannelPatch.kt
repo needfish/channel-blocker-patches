@@ -10,7 +10,7 @@ import app.morphe.patcher.patch.patch
 private const val EXTENSION_CLASS = "Lapp/kitan/extension/youtube/ChannelBlocker;"
 
 private const val EXTENSION_REGISTER_METHOD =
-    "$EXTENSION_CLASS;->register()V"
+    "${EXTENSION_CLASS}->register()V"
 
 private const val EXTENSION_FILTER_METHOD =
     "Lapp/kitan/extension/youtube/ChannelBlockerFilter;->isBlockedChannelBuffer([B)Z"
