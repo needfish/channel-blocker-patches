@@ -1,3 +1,9 @@
+## [2.0.1](https://github.com/needfish/channel-blocker-patches/compare/v2.0.0...v2.0.1) (2026-11-15)
+
+### 🐛 Bug Fixes
+
+* Remove double semicolon in add-on registration descriptor ([e8e1ce7](https://github.com/needfish/channel-blocker-patches/commit/e8e1ce704760b2bc0530008b58f0ec3842beddcb))
+
 ## [2.0.0](https://github.com/needfish/channel-blocker-patches/compare/v1.0.0...v2.0.0) (2026-11-15)
 
 ### ⚠ BREAKING CHANGES
