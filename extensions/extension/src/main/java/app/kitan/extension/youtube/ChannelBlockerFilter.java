@@ -1,5 +1,7 @@
 package app.kitan.extension.youtube;
 
+import java.util.Set;
+
 /**
  * Feed/search filter hook, injected at patch time into the base bundle's
  * runtime Litho filter ({@code LithoFilterPatch.isFiltered}).

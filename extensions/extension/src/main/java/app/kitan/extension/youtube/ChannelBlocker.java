@@ -178,7 +178,7 @@ public final class ChannelBlocker {
         // Fallback: channel of the currently playing video (player flyout).
         String current = callStaticString(
                 "app.morphe.extension.youtube.patches.VideoInformation",
-                "getChannelId");
+                "getChannelId", new Class[0]);
         if (current != null && !current.isEmpty()) {
             return current;
         }
