@@ -35,7 +35,7 @@ Click the button below, or manually add this repo url to Morphe Manager: https:/
 ## 🩹 Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.0.0-dev.1](https://github.com/needfish/channel-blocker-patches/releases/tag/v1.0.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
+> **[v2.0.0](https://github.com/needfish/channel-blocker-patches/releases/tag/v2.0.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;1 patches total
 <details open>
 <summary>📦 YouTube&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
@@ -49,7 +49,7 @@ Click the button below, or manually add this repo url to Morphe Manager: https:/
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Block channel](#block-channel) | Adds a 'Block channel' button to the video menu. Blocked channels are hidden from search results and video recommendations. |  |
+| [Block channel](#block-channel) | Adds channel blocking to the video menu. Blocked channels are hidden from search results and video recommendations. Requires the Morphe official patch bundle. |  |
 
 </details>
 
