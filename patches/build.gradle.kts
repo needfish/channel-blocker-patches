@@ -1,12 +1,12 @@
-group = "app.template"
+group = "app.kitan"
 
 patches {
     // TODO: Update this section with your project details.
     about {
-        name = "UserXYZ Patches"
+        name = "Kitan Patches"
         description = "Patches for apps I like"
-        source = "git@github.com:UserXYZ/morphe-patches.git"
-        author = "Awesome dev"
+        source = "git@github.com:7kitan/channel-blocker-patches.git"
+        author = "kitan"
         contact = "na"
         website = "na"
         license = "GPLv3"

@@ -1,18 +1,18 @@
-# 👋🧩 Morphe Patches template
+# 🧩 Channel blocker patches
 
-Template repository for Morphe Patches.
+Morphe patches for YouTube. Adds a **"Block channel"** button to the video
+flyout (three-dot) menu; blocked channels are removed from search results and
+recommendations.
 
 ## ❓ About
 
 Patches for apps I like.
 
-<!-- TODO: Update this about section with a brief introduction/summary about this repo and what it offers. -->
-
 ### How to use these patches
 
-Click the button below, or manually add this repo url to Morphe Manager: https://github.com/xyz-user/xyz-patches
+Click the button below, or manually add this repo url to Morphe Manager: https://github.com/7kitan/channel-blocker-patches
 
-<a href="https://morphe.software/add-source?github=xyz-user/xyz-patches">
+<a href="https://morphe.software/add-source?github=7kitan/channel-blocker-patches">
   <img src=".github/assets/add-to-morphe.svg" alt="Add to Morphe" height="48">
 </a>
 
@@ -56,6 +56,30 @@ To start using this template, follow these steps:
    users then have to confirm the new key in Morphe Manager before they get your next release.
 
 🎉 You are now ready to start creating patches!
+
+## 🔑 Building locally
+
+The `app.morphe.patches` Gradle plugin is served from Morphe's GitHub Packages
+registry, so local builds need a GitHub token with `read:packages` scope:
+
+```bash
+export GITHUB_TOKEN=ghp_xxx   # or set gpr.user / gpr.key in ~/.gradle/gradle.properties
+./gradlew :patches:buildAndroid --no-daemon
+```
+
+## 🧱 Patch: Block channel
+
+- `patches/.../blockchannel/BlockChannelPatch.kt` — patch definition (flyout
+  button hook, Litho filter hook, extension init)
+- `extensions/extension/.../youtube/ChannelBlocker.java` — blocklist storage,
+  flyout toggle handler, filter entry point
+- `extensions/extension/.../youtube/ChannelBlockFilter.java` +
+  `ProtobufHelper.java` — channel id extraction from Litho feed items
+- `extensions/extension/.../youtube/FlyoutMenu.java` — flyout menu row builder
+
+Search the sources for `TODO(verify)` — those fingerprint/protobuf details
+must be confirmed against a decompiled YouTube 21.30.216 (jadx) before
+releasing.
 
 ## 🧑‍💻 Dev usage
 
