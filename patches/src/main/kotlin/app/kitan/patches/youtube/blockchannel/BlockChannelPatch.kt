@@ -3,8 +3,8 @@ package app.kitan.patches.youtube.blockchannel
 import app.kitan.patches.youtube.Constants.COMPATIBILITY_YOUTUBE
 import app.kitan.patches.youtube.addon.registerAddOn
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
-import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.PatchException
+import app.morphe.patcher.patch.mutableClassDefByOrNull
 import app.morphe.patcher.patch.patch
 
 private const val EXTENSION_CLASS = "Lapp/kitan/extension/youtube/ChannelBlocker;"

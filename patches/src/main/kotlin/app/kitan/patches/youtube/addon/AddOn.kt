@@ -14,8 +14,10 @@
  */
 package app.kitan.patches.youtube.addon
 
-import app.morphe.patcher.patch.BytecodePatchContext
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.patch.PatchException
+import app.morphe.patcher.patch.classDefByOrNull
+import app.morphe.patcher.patch.mutableClassDefByOrNull
 import com.android.tools.smali.dexlib2.AccessFlags
 
 /**
@@ -43,7 +45,7 @@ private val REQUIRED_HOST_CLASSES = listOf(
 /**
  * Fails the patch unless the base bundle is present.
  */
-private fun BytecodePatchContext.checkHostCompatibility() {
+private fun checkHostCompatibility() {
     val missing = REQUIRED_HOST_CLASSES.filter { classDefByOrNull(it) == null }
     if (missing.isNotEmpty()) throw PatchException(
         """
@@ -52,7 +54,7 @@ private fun BytecodePatchContext.checkHostCompatibility() {
             Could not find Morphe Patches extension classes.
 
             This patch bundle is an add-on that requires the official Morphe patches.
-            Patch again with the Morhe official patch bundle (Morphe Patches source)
+            Patch again with the Morphe official patch bundle (Morphe Patches source)
             included, with at least one patch using the Litho filter enabled.
 
             Missing: ${missing.joinToString()}
@@ -72,9 +74,8 @@ private fun BytecodePatchContext.checkHostCompatibility() {
  * @param registrationMethodDescriptor Descriptor of the static registration
  * method of this add-on.
  */
-context(context: BytecodePatchContext)
 internal fun registerAddOn(registrationMethodDescriptor: String) {
-    val addOnManagerClass = context.mutableClassDefByOrNull(ADD_ON_MANAGER_CLASS_DESCRIPTOR)
+    val addOnManagerClass = mutableClassDefByOrNull(ADD_ON_MANAGER_CLASS_DESCRIPTOR)
         ?: throw PatchException(
             """
                 ##########################
@@ -89,7 +90,7 @@ internal fun registerAddOn(registrationMethodDescriptor: String) {
             """.trimIndent()
         )
 
-    context.checkHostCompatibility()
+    checkHostCompatibility()
 
     val registerMethod = addOnManagerClass.methods.firstOrNull {
         it.name == ADD_ON_MANAGER_REGISTER_METHOD_NAME &&
