@@ -5,7 +5,7 @@ patches {
     about {
         name = "Kitan Patches"
         description = "Patches for apps I like"
-        source = "git@github.com:7kitan/channel-blocker-patches.git"
+        source = "git@github.com:needfish/channel-blocker-patches.git"
         author = "kitan"
         contact = "na"
         website = "na"

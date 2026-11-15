@@ -1,7 +1,6 @@
 package app.kitan.patches.youtube.blockchannel
 
 import app.kitan.patches.youtube.Constants.COMPATIBILITY_YOUTUBE
-import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.patch
 
@@ -24,7 +23,6 @@ val blockChannelPatch = patch(
     name = "Block channel",
     description = "Adds a 'Block channel' button to the video menu. " +
             "Blocked channels are hidden from search results and video recommendations.",
-    use = true,
     default = true
 ) {
     compatibleWith(COMPATIBILITY_YOUTUBE)
@@ -33,7 +31,7 @@ val blockChannelPatch = patch(
 
     execute {
         // 1. Initialize the extension (loads the persisted blocklist).
-        addInstruction(
+        StartupFingerprint.method.addInstructions(
             0,
             """
                 invoke-static {}, $EXTENSION_CLASS;->initialize()V

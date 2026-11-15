@@ -11,7 +11,7 @@ object Constants {
         packageName = "com.google.android.youtube",
         apkFileType = ApkFileType.APK,
         // YouTube icon background color, used in Morphe Manager.
-        appIconColor = 0xFF282828,
+        appIconColor = 0x282828,
         targets = listOf(
             // 'any' future version supported experimentally.
             AppTarget(
