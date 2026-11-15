@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.0.0-dev.1",
+  "version": "1.0.0-dev.2",
   "patches": [
     {
       "name": "Block channel",
-      "description": "Adds a 'Block channel' button to the video menu. Blocked channels are hidden from search results and video recommendations.",
+      "description": "Adds channel blocking to the video menu. Blocked channels are hidden from search results and video recommendations. Requires the Morphe official patch bundle.",
       "default": true,
       "category": null,
       "compatiblePackages": [

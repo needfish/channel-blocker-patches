@@ -1,3 +1,18 @@
+## [1.0.0-dev.2](https://github.com/needfish/channel-blocker-patches/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2026-11-15)
+
+### ⚠ BREAKING CHANGES
+
+* Requires the official Morphe patch bundle when patching.
+
+### refactor
+
+* Rework as Morphe add-on bundle ([496f9cd](https://github.com/needfish/channel-blocker-patches/commit/496f9cddc87e2502f75bf5488b81cda9af758138))
+
+### 🐛 Bug Fixes
+
+* Add missing Set import and fix reflection call arity ([c46eab6](https://github.com/needfish/channel-blocker-patches/commit/c46eab6f4439be58beaf46f18b6b8bc9a84ca175))
+* Use global classDef functions of Patcher 2.3.0 and fix imports ([290b1b7](https://github.com/needfish/channel-blocker-patches/commit/290b1b7612af1a6692d79bbbcad0713e2e80b196))
+
 ## 1.0.0-dev.1 (2026-11-15)
 
 ### ✨ New Features
