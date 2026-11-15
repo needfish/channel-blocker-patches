@@ -2,13 +2,15 @@ package app.kitan.extension.youtube;
 
 import android.content.Context;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 /**
- * Shared helpers for resolving the current app context/activity.
+ * Helpers for resolving the current app context/activity.
  *
- * ⚠️ TODO(verify): if this patch bundle is used together with the official
- * Morphe patches, their extension already provides a context holder
- * (app/morphe/extension/shared/Utils). This fallback keeps this bundle
- * self-contained when used standalone.
+ * The base Morphe bundle extension provides its own context holder, but this
+ * add-on stays self-contained: the context is resolved from the ActivityThread
+ * singleton, which works whether or not the base bundle is loaded first.
  */
 final class Utils {
 
@@ -23,26 +25,39 @@ final class Utils {
             return context;
         }
         try {
-            // Standard trick to get the application context without hooking
-            // Activity lifecycles.
             Class<?> activityThread = Class.forName("android.app.ActivityThread");
-            Object current = activityThread.getMethod("currentActivityThread").invoke(null);
-            Object app = activityThread.getMethod("getApplication").invoke(current);
+            Method currentActivityThread = activityThread.getDeclaredMethod("currentActivityThread");
+            currentActivityThread.setAccessible(true);
+            Object current = currentActivityThread.invoke(null);
+            if (current == null) {
+                return null;
+            }
+            Method getApplication = activityThread.getDeclaredMethod("getApplication");
+            getApplication.setAccessible(true);
+            Object app = getApplication.invoke(current);
             if (app instanceof Context) {
                 appContext = (Context) app;
                 return appContext;
             }
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            Logger.printException(() -> "Could not resolve app context", ex);
         }
         return null;
     }
 
     public static android.app.Activity getActivity() {
-        Context context = getContext();
-        if (context instanceof android.app.Activity) {
-            return (android.app.Activity) context;
+        // Walk the current activity from the base bundle when available,
+        // otherwise fall back to the app context.
+        try {
+            Class<?> clazz = Class.forName("app.morphe.extension.shared.Utils");
+            Method method = clazz.getDeclaredMethod("getActivity");
+            method.setAccessible(true);
+            Object result = method.invoke(null);
+            if (result instanceof android.app.Activity) {
+                return (android.app.Activity) result;
+            }
+        } catch (Exception ignored) {
         }
-        // TODO(verify): walk the resumed activity stack if needed.
         return null;
     }
 }
